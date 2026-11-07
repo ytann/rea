@@ -27,7 +27,9 @@ founder-level conversation. For source-level decompilation itself, use
 ### Phase 0 — Static analysis (JADX)
 
 Run `inspect_android_package` on the APK. Record: API endpoints, third-party
-SDKs, embedded GraphQL/keys, manifest components, and the feature surface.
+SDKs, embedded GraphQL/keys, manifest components, the feature surface, and the
+**data-flow evidence** — manifest permissions, request/response field names, and
+SDK telemetry (follow [data-flow-inventory](references/data-flow-inventory.md)).
 Tag each finding `[obs]` (seen) or `[der]` (derived).
 
 ### Phase 1 — Dynamic capture (best-effort)
@@ -45,7 +47,8 @@ news, engineering blog, GitHub org, StackShare/BuiltWith. Extract stack signals.
 
 ### Phase 3 — Synthesis
 
-Fill in [report-template](references/report-template.md). Tag every claim with
+Fill in [report-template](references/report-template.md). Complete the data-flow
+inventory (5.4) and derive the HLD (5.5) from the flows. Tag every claim with
 its evidence class (`[obs]`/`[der]`/`[inf]`/`[unk]`). Do not invent facts; mark
 unconfirmed reasoning `[inf]` and unknowns `[unk]`.
 
