@@ -11,11 +11,10 @@ giving a holistic view of a startup's mobile product: feature inventory,
 client→server mapping, architecture (HLD), third-party SaaS, inferred data
 model, and how/why each major feature is built.
 
-Use this skill when the target is a startup's **product** (mobile app + backend
-
-- public footprint) and the goal is understanding to hold a founder-level
-  conversation. For source-level decompilation itself, use
-  `reverse-engineer-anything` instead.
+Use this skill when the target is a startup's **product** — mobile app,
+backend, and public footprint — and the goal is understanding to hold a
+founder-level conversation. For source-level decompilation itself, use
+`reverse-engineer-anything` instead.
 
 ## Prerequisites
 
