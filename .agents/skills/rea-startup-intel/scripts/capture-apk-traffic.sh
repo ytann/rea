@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Best-effort dynamic traffic capture for an Android APK.
 # Drives the app with monkey while mitmdump records; finalizes .mitm and .har.
+# The emulator (when booted with --avd) is left running and not reaped; only
+# the mitmdump process this script starts is killed on exit.
 set -euo pipefail
 
 APK_PATH=""
@@ -25,7 +27,7 @@ Usage: capture-apk-traffic.sh --apk PATH --package PKG --output DIR [options]
 Required:
   --apk PATH       Absolute path to the APK to install.
   --package PKG    Android package id (e.g. com.acme.app).
-  --output DIR     Output directory; receives traffic.mitm and traffic.har.
+  --output DIR     Output directory; receives traffic.mitm, traffic.har, and mitmdump.log.
 
 Options:
   --avd NAME       Boot this AVD; otherwise attach to the running device.
@@ -71,6 +73,7 @@ parse_args() {
   [[ "$PORT" =~ ^[0-9]+$ ]] || die "--port must be an integer"
 }
 
+# First connected device wins; with multiple devices, pass --avd to control which.
 device_serial() {
   "$ADB_BIN" devices | awk 'NR>1 && $2=="device" {print $1; exit}'
 }
@@ -106,12 +109,15 @@ wait_port() {
 
 start_proxy() {
   mkdir -p "$OUTPUT_DIR"
-  "$MITMDUMP_BIN" --mode regular --listen-host 127.0.0.1 --listen-port "$PORT" \
+  "$MITMDUMP_BIN" --listen-host 127.0.0.1 --listen-port "$PORT" \
     -w "$OUTPUT_DIR/traffic.mitm" \
     --set "hardump=$OUTPUT_DIR/traffic.har" \
     >"$OUTPUT_DIR/mitmdump.log" 2>&1 &
   PROXY_PID=$!
   wait_port
+  if ! kill -0 "$PROXY_PID" 2>/dev/null; then
+    die "mitmdump exited before binding port $PORT"
+  fi
 }
 
 route_device() {
@@ -153,6 +159,7 @@ main() {
   parse_args "$@"
   require_bin "$ADB_BIN"
   require_bin "$MITMDUMP_BIN"
+  require_bin timeout
   [[ -n "$AVD_NAME" ]] && require_bin "$EMULATOR_BIN"
 
   if [[ "$CHECK_ONLY" -eq 1 ]]; then

@@ -1,7 +1,7 @@
 # {Product Name} — Architecture & Product Teardown
 
 > Evidence tags on every claim: `[obs]` observation · `[der]` derivation · `[inf]` inference · `[unk]` unknown.
-> Fill the `{...}` placeholders per target; delete sections that have no evidence.
+> Fill the `{...}` placeholders per target; mark sections with no evidence `[unk]` rather than deleting them.
 
 ## 1. Abstract
 
