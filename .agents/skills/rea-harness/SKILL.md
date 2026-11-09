@@ -26,9 +26,20 @@ node .agents/skills/rea-harness/scripts/rea-harness.mjs analyze /path/to/app.apk
 ```
 
 `analyze` runs detect → readiness probe → route → readiness check, then writes
-`evidence.json` (the bundle) and `report.md` into `--out` (default
-`./rea-harness-out/<basename>`). By default it prints a plan summary; with
-`--json` it prints the bundle JSON to stdout instead.
+`evidence.json` (the bundle) and `report.md` into `--out`. By default it prints
+a plan summary; with `--json` it prints the bundle JSON to stdout instead.
+
+## Workspace layout
+
+Targets and outputs live outside the repo so the checkout stays clean:
+
+- **Input:** `~/rea/input/` — drop targets here (APK, IPA, `.exe`, `.deb`, pcap, …).
+- **Output:** `~/rea/output/<target-basename>/` — `report.md`, `evidence.json`,
+  and (after animation) `videos/`.
+
+Override the root with `REA_HARNESS_HOME`. A bare filename argument resolves
+against `~/rea/input/` first, so `analyze myapp.apk` works if `myapp.apk` is in
+the input directory.
 
 ## How an agent uses it
 
@@ -47,8 +58,8 @@ node .agents/skills/rea-harness/scripts/rea-harness.mjs analyze /path/to/app.apk
 node --input-type=module -e "
 import { readFileSync, writeFileSync } from 'node:fs';
 import { bundleToMarkdown } from '.agents/skills/rea-harness/scripts/lib/report.mjs';
-const bundle = JSON.parse(readFileSync('rea-harness-out/<basename>/evidence.json', 'utf8'));
-writeFileSync('rea-harness-out/<basename>/report.md', bundleToMarkdown(bundle));
+const bundle = JSON.parse(readFileSync('~/rea/output/<basename>/evidence.json', 'utf8'));
+writeFileSync('~/rea/output/<basename>/report.md', bundleToMarkdown(bundle));
 "
 ```
 

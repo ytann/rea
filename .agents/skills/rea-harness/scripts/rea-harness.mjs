@@ -1,5 +1,5 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { basename, extname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { detect, route } from "./lib/target.mjs";
@@ -7,12 +7,29 @@ import { createBundle, addFact } from "./lib/evidence.mjs";
 import { probeEngines, checkReadiness, REMEDIATION } from "./lib/readiness.mjs";
 import { bundleToMarkdown } from "./lib/report.mjs";
 
+// Workspace layout: targets live in $REA_HARNESS_HOME/input/, outputs in
+// $REA_HARNESS_HOME/output/<target>/. Override the root via REA_HARNESS_HOME.
+const WORKSPACE =
+  process.env.REA_HARNESS_HOME || join(process.env.HOME || "~", "rea");
+const INPUT_DIR = join(WORKSPACE, "input");
+
+function resolveTarget(target) {
+  if (typeof target !== "string") return target; // bytes passthrough
+  if (/^https?:\/\//.test(target)) return target;
+  if (target.includes("/") || target.includes("\\")) return target;
+  const inInput = join(INPUT_DIR, target);
+  return existsSync(inInput) ? inInput : target;
+}
+
 export async function analyze(target, opts = {}) {
-  const descriptor = detect(target);
+  const resolved = resolveTarget(target);
+  const descriptor = detect(resolved);
   const availability = await probeEngines(opts.lookup);
   const plan = route(descriptor.format);
   const readiness = checkReadiness(plan.required_engines, availability);
-  const outDir = opts.out ?? join("rea-harness-out", basename(target));
+  const outDir =
+    opts.out ??
+    join(WORKSPACE, "output", basename(resolved, extname(resolved)));
 
   const bundle = createBundle(descriptor, availability);
   bundle.run.commands = plan.workflow.map((command) => `rea ${command}`);
